@@ -467,21 +467,32 @@
 
   <script>
     require([
-      "esri/Map",
-      "esri/views/MapView",
-      "esri/layers/TileLayer",
-      "esri/layers/GraphicsLayer",
-      "esri/layers/MediaLayer",
-      "esri/layers/support/ImageElement",
-      "esri/layers/support/ExtentAndRotationGeoreference",
-      "esri/geometry/Extent",
-      "esri/Graphic",
-      "esri/geometry/Point"
-    ], function (Map, MapView, TileLayer, WebTileLayer, TileInfo, GraphicsLayer, MediaLayer, ImageElement, ExtentAndRotationGeoreference, Extent, Graphic, Point) {
-      const LANDING_SITE = {
-        longitude: 137.4019,
-        latitude: -4.5965
-      };
+  "esri/Map",
+  "esri/views/MapView",
+  "esri/layers/TileLayer",
+  "esri/layers/WebTileLayer",
+  "esri/layers/support/TileInfo",
+  "esri/layers/GraphicsLayer",
+  "esri/layers/MediaLayer",
+  "esri/layers/support/ImageElement",
+  "esri/layers/support/ExtentAndRotationGeoreference",
+  "esri/geometry/Extent",
+  "esri/Graphic",
+  "esri/geometry/Point"
+], function (
+  Map,
+  MapView,
+  TileLayer,
+  WebTileLayer,
+  TileInfo,
+  GraphicsLayer,
+  MediaLayer,
+  ImageElement,
+  ExtentAndRotationGeoreference,
+  Extent,
+  Graphic,
+  Point
+) {
 
       // Mars 2000 geographic coordinates (longitude/latitude in degrees).
       const marsSpatialReference = { wkid: 104905 };
