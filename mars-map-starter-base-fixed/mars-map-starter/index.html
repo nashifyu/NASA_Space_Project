@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Marswalk | Mount Sharp Map</title>
+
+  <!-- ArcGIS Maps SDK for JavaScript -->
+  <link rel="stylesheet" href="https://js.arcgis.com/4.32/esri/themes/dark/main.css" />
+  <script src="https://js.arcgis.com/4.32/"></script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101419;
+      --panel: rgba(20, 27, 34, 0.94);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --muted: #9aa7b2;
+      --text: #f5f7f8;
+      --accent: #f4a261;
+      --green: #8bc7a2;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    header {
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px 20px;
+      background: #151c23;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 11px;
+      background: linear-gradient(145deg, #d97745, #8d4735);
+      font-size: 20px;
+    }
+
+    .eyebrow {
+      margin: 0 0 2px;
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .17em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 680;
+      letter-spacing: .01em;
+    }
+
+    .header-meta {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    main {
+      position: relative;
+      min-height: 0;
+      background: #20262c;
+    }
+
+    #mapView {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-card {
+      position: absolute;
+      z-index: 3;
+      top: 16px;
+      left: 16px;
+      width: min(330px, calc(100vw - 32px));
+      padding: 15px 16px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 13px;
+      box-shadow: 0 12px 36px rgba(0,0,0,.28);
+      backdrop-filter: blur(12px);
+    }
+
+    .map-card h2 {
+      margin: 0 0 5px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .map-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .coords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .coord-chip {
+      padding: 6px 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 7px;
+      background: rgba(255,255,255,.055);
+      color: #f6f7f7;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+    }
+
+    .layer-control {
+      margin-top: 13px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 9px;
+      background: rgba(255,255,255,.045);
+    }
+
+    .layer-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 5px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .layer-state {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 650;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .layer-control p {
+      margin: 0 0 9px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .layer-controls-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .layer-controls-row button { flex: 0 0 auto; }
+
+    .opacity-control {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      flex: 1;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .opacity-control input {
+      width: 100%;
+      min-width: 40px;
+      accent-color: var(--accent);
+    }
+
+    .opacity-control output {
+      min-width: 29px;
+      color: var(--text);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .base-layer-control {
+      border-color: rgba(217, 119, 69, .35);
+      background: linear-gradient(135deg, rgba(152, 77, 48, .17), rgba(255,255,255,.035));
+    }
+
+    .base-state {
+      color: #a9d9bb;
+    }
+
+    .base-swatches {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      height: 7px;
+      margin: 8px 0 6px;
+    }
+
+    .base-swatches span {
+      border-radius: 3px;
+      background: #9a5941;
+    }
+
+    .base-swatches span:nth-child(2) { background: #b66b4a; }
+    .base-swatches span:nth-child(3) { background: #754b3b; }
+    .base-swatches span:nth-child(4) { background: #c17d58; }
+    .base-swatches span:nth-child(5) { background: #5a4137; }
+
+    .base-detail {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .slope-legend {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 4px;
+      margin: 8px 0 2px;
+    }
+
+    .slope-legend-item {
+      min-width: 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.3;
+    }
+
+    .slope-swatch {
+      display: block;
+      height: 7px;
+      margin-bottom: 4px;
+      border-radius: 3px;
+    }
+
+    .data-status {
+      margin-top: 8px;
+      padding: 7px 8px;
+      border-radius: 6px;
+      background: rgba(244, 162, 97, .09);
+      color: #e8bc9b;
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .data-status.ready {
+      background: rgba(139, 199, 162, .1);
+      color: #a9d9bb;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--text);
+      background: rgba(255,255,255,.07);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease;
+    }
+
+    button:hover {
+      background: rgba(255,255,255,.13);
+      border-color: rgba(255,255,255,.32);
+    }
+
+    button.primary {
+      background: #9c563c;
+      border-color: #bd7958;
+    }
+
+    button.primary:hover { background: #b46849; }
+
+    .map-note {
+      position: absolute;
+      z-index: 3;
+      right: 16px;
+      bottom: 16px;
+      max-width: min(360px, calc(100vw - 32px));
+      padding: 10px 12px;
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+      box-shadow: 0 8px 28px rgba(0,0,0,.22);
+    }
+
+    .map-note strong { color: var(--text); }
+
+    footer {
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 16px;
+      border-top: 1px solid var(--panel-border);
+      background: #151c23;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    footer a { color: #e5b08f; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    .loading {
+      position: absolute;
+      z-index: 2;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #d5dce1;
+      background: #252d34;
+      pointer-events: none;
+      font-size: 13px;
+    }
+
+    .loading.hidden { display: none; }
+
+    @media (max-width: 620px) {
+      header { padding: 11px 13px; }
+      .header-meta { display: none; }
+      .map-card { top: 10px; left: 10px; padding: 12px; }
+      .map-note { right: 10px; bottom: 10px; }
+      footer { flex-direction: column; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">⌁</div>
+        <div>
+          <p class="eyebrow">Marswalk · Early map prototype</p>
+          <h1>Mount Sharp Explorer</h1>
+        </div>
+      </div>
+      <div class="header-meta">GALE CRATER &nbsp;·&nbsp; MARS &nbsp;·&nbsp; OVERHEAD VIEW</div>
+    </header>
+
+    <main>
+      <div id="mapView" aria-label="Overhead map of Gale Crater and Mount Sharp on Mars"></div>
+      <div id="loading" class="loading">Loading Mars basemap…</div>
+
+      <section class="map-card" aria-label="Map reference point">
+        <h2>Proposed landing-site reference</h2>
+        <p>Centered on the final Mars Science Laboratory (MSL) landing-ellipse reference coordinate from the 2015 Gale Crater exploration-zone paper.</p>
+        <div class="coords">
+          <span class="coord-chip">137.4019° E</span>
+          <span class="coord-chip">4.5965° S</span>
+        </div>
+
+        <div class="layer-control base-layer-control" aria-label="Base Mars imagery layer">
+          <div class="layer-heading">
+            <span>Base surface · Viking color mosaic</span>
+            <span class="layer-state base-state" id="baseLayerState">Loading</span>
+          </div>
+          <p>The map foundation: NASA Trek's global red-brown Viking color mosaic. It stays underneath optional terrain overlays.</p>
+          <div class="base-swatches" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="base-detail">Viking MDIM 2.1 · ~231 m/pixel at the equator · NASA Trek</div>
+          <div class="data-status" id="baseDataStatus">Connecting to NASA Trek imagery…</div>
+        </div>
+
+        <div class="layer-control" aria-label="Map terrain layer controls">
+          <div class="layer-heading">
+            <span>MOLA terrain shading</span>
+            <span class="layer-state" id="terrainState">Off</span>
+          </div>
+          <p>Overlay elevation-derived color hillshade to make broad ridges, valleys, and relief easier to see.</p>
+          <div class="layer-controls-row">
+            <button id="toggleTerrain" type="button" aria-pressed="false">Show terrain</button>
+            <label class="opacity-control" for="terrainOpacity">
+              Opacity
+              <input id="terrainOpacity" type="range" min="20" max="90" value="65" disabled />
+              <output id="terrainOpacityValue" for="terrainOpacity">65%</output>
+            </label>
+          </div>
+        </div>
+
+        <div class="layer-control" aria-label="Slope analysis layer controls">
+          <div class="layer-heading">
+            <span>Slope analysis · USGS Gale DEM</span>
+            <span class="layer-state" id="slopeState">Not built</span>
+          </div>
+          <p>Derived slope in degrees with the Horn 3×3 method, sampled to a 25 m analysis grid. Actual detail varies with source DEM coverage.</p>
+          <div class="slope-legend" aria-label="Slope legend">
+            <div class="slope-legend-item"><span class="slope-swatch" style="background:#30965b"></span>0–5°</div>
+            <div class="slope-legend-item"><span class="slope-swatch" style="background:#9eb741"></span>5–10°</div>
+            <div class="slope-legend-item"><span class="slope-swatch" style="background:#efb73d"></span>10–20°</div>
+            <div class="slope-legend-item"><span class="slope-swatch" style="background:#e16935"></span>20–30°</div>
+            <div class="slope-legend-item"><span class="slope-swatch" style="background:#ae3037"></span>30°+</div>
+          </div>
+          <div class="layer-controls-row" style="margin-top:9px">
+            <button id="toggleSlope" type="button" disabled>Generate slope data first</button>
+            <label class="opacity-control" for="slopeOpacity">
+              Opacity
+              <input id="slopeOpacity" type="range" min="20" max="95" value="78" disabled />
+              <output id="slopeOpacityValue" for="slopeOpacity">78%</output>
+            </label>
+          </div>
+          <div class="data-status" id="slopeDataStatus">Slope overlay not generated yet. Download the USGS DEM and run process_slope.bat; see README.md.</div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="resetView" type="button">Recenter map</button>
+          <button id="copyCoords" type="button">Copy coordinates</button>
+        </div>
+      </section>
+
+      <div class="map-note">
+        <strong>Map layers:</strong> The red-brown base is the Viking color mosaic. MOLA adds broad regional relief, while the optional slope layer is calculated from the USGS Gale DEM. Neither terrain overlay is a validated astronaut safety map.
+      </div>
+    </main>
+
+    <footer>
+      <span>Base imagery: USGS Astrogeology / NASA Ames Viking MDIM 2.1 colorized global mosaic</span>
+      <span>Reference: <a href="https://www.hou.usra.edu/meetings/explorationzone2015/pdf/1020.pdf" target="_blank" rel="noreferrer">Calef et al. (2015), Figure 1 / landing-ellipse center</a></span>
+    </footer>
+  </div>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/TileLayer",
+      "esri/layers/GraphicsLayer",
+      "esri/layers/MediaLayer",
+      "esri/layers/support/ImageElement",
+      "esri/layers/support/ExtentAndRotationGeoreference",
+      "esri/geometry/Extent",
+      "esri/Graphic",
+      "esri/geometry/Point"
+    ], function (Map, MapView, TileLayer, WebTileLayer, TileInfo, GraphicsLayer, MediaLayer, ImageElement, ExtentAndRotationGeoreference, Extent, Graphic, Point) {
+      const LANDING_SITE = {
+        longitude: 137.4019,
+        latitude: -4.5965
+      };
+
+      // Mars 2000 geographic coordinates (longitude/latitude in degrees).
+      const marsSpatialReference = { wkid: 104905 };
+
+      // NASA Trek serves its Viking global color mosaic as equirectangular
+      // XYZ tiles in Mars 2000 geographic coordinates (EPSG:104905).
+      // The previous ArcGIS TileLayer used the MarsEC0 projected tile cache,
+      // which did not match this MapView's geographic coordinate system.
+      const marsMetersPerDegree = (2 * Math.PI * 3396190) / 360;
+      const marsLods = Array.from({ length: 9 }, (_, level) => {
+        const resolution = 180 / (256 * Math.pow(2, level));
+        return {
+          level,
+          resolution,
+          scale: resolution * marsMetersPerDegree * 96 / 0.0254
+        };
+      });
+
+      const imagery = new WebTileLayer({
+        urlTemplate: "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg",
+        title: "Base surface — Viking MDIM 2.1 color mosaic",
+        opacity: 1,
+        visible: true,
+        tileInfo: new TileInfo({
+          dpi: 96,
+          size: [256, 256],
+          format: "jpg",
+          origin: { x: -180, y: 90 },
+          spatialReference: marsSpatialReference,
+          lods: marsLods
+        }),
+        fullExtent: new Extent({
+          xmin: -180,
+          ymin: -90,
+          xmax: 180,
+          ymax: 90,
+          spatialReference: marsSpatialReference
+        })
+      });
+
+      // MOLA-derived color hillshade. This ArcGIS tile service uses the same
+      // Mars 2000 / MarsEC0 spatial reference (WKID 104905) as the basemap.
+      // It is hidden initially so users can compare it with the Viking mosaic.
+      const terrainLayer = new TileLayer({
+        url: "https://tiles.arcgis.com/tiles/nzS0F0zdNLvs7nc8/arcgis/rest/services/Mars_MOLA_elevation/MapServer",
+        title: "MOLA elevation color hillshade",
+        opacity: 0.65,
+        visible: false
+      });
+
+      const referenceLayer = new GraphicsLayer({ title: "Paper reference point" });
+      const map = new Map({
+        basemap: null,
+        layers: [imagery, terrainLayer, referenceLayer]
+      });
+
+      const baseLayerState = document.getElementById("baseLayerState");
+      const baseDataStatus = document.getElementById("baseDataStatus");
+      imagery.load().then(() => {
+        baseLayerState.textContent = "On";
+        baseDataStatus.classList.add("ready");
+        baseDataStatus.textContent = "NASA Trek Viking mosaic layer loaded. Imagery tiles will fill in as the map draws.";
+      }).catch((error) => {
+        baseLayerState.textContent = "Unavailable";
+        baseLayerState.style.color = "#e8bc9b";
+        baseDataStatus.textContent = "NASA Trek imagery could not load. Check your internet connection or try again later.";
+        console.error("Viking base layer failed to load:", error);
+      });
+
+      const landingPoint = new Point({
+        longitude: LANDING_SITE.longitude,
+        latitude: LANDING_SITE.latitude,
+        spatialReference: marsSpatialReference
+      });
+
+      const landingMarker = new Graphic({
+        geometry: landingPoint,
+        symbol: {
+          type: "simple-marker",
+          style: "diamond",
+          size: 16,
+          color: [244, 162, 97, 1],
+          outline: { color: [255, 255, 255, 1], width: 1.6 }
+        },
+        popupTemplate: {
+          title: "MSL landing-ellipse center",
+          content: "Paper reference coordinate: 137.4019° E, 4.5965° S. This is the center of the final Mars Science Laboratory landing ellipse cited in the 2015 exploration-zone paper."
+        }
+      });
+
+      const landingLabel = new Graphic({
+        geometry: landingPoint,
+        symbol: {
+          type: "text",
+          text: "MSL landing-ellipse center",
+          color: "#ffffff",
+          haloColor: "#171d23",
+          haloSize: 2,
+          xoffset: 18,
+          yoffset: 16,
+          font: { size: 11, weight: "bold", family: "Arial" }
+        }
+      });
+
+      referenceLayer.addMany([landingMarker, landingLabel]);
+
+      const view = new MapView({
+        container: "mapView",
+        map: map,
+        spatialReference: marsSpatialReference,
+        center: landingPoint,
+        zoom: 8,
+        popup: { dockEnabled: true, dockOptions: { position: "bottom-right", breakpoint: false } },
+        constraints: { snapToZoom: true }
+      });
+
+      // The slope PNG and georeferencing metadata are generated locally by
+      // build_slope.py after the official USGS Gale DEM has been downloaded.
+      // Keeping this as a MediaLayer lets the app stay static (no backend).
+      let slopeLayer = null;
+      const slopeToggle = document.getElementById("toggleSlope");
+      const slopeState = document.getElementById("slopeState");
+      const slopeOpacity = document.getElementById("slopeOpacity");
+      const slopeOpacityValue = document.getElementById("slopeOpacityValue");
+      const slopeDataStatus = document.getElementById("slopeDataStatus");
+
+      async function initializeSlopeLayer() {
+        try {
+          const response = await fetch("slope-overlay/metadata.json", { cache: "no-store" });
+          if (!response.ok) throw new Error("Slope metadata has not been generated yet.");
+          const metadata = await response.json();
+          const bounds = metadata.extent;
+          if (!bounds || !Number.isFinite(bounds.xmin) || !Number.isFinite(bounds.ymin) ||
+              !Number.isFinite(bounds.xmax) || !Number.isFinite(bounds.ymax)) {
+            throw new Error("Slope metadata is missing a valid map extent.");
+          }
+
+          const slopeImage = new ImageElement({
+            image: "slope-overlay/slope.png",
+            georeference: new ExtentAndRotationGeoreference({
+              extent: new Extent({
+                xmin: bounds.xmin,
+                ymin: bounds.ymin,
+                xmax: bounds.xmax,
+                ymax: bounds.ymax,
+                spatialReference: marsSpatialReference
+              })
+            })
+          });
+
+          slopeLayer = new MediaLayer({
+            source: [slopeImage],
+            title: "Slope derived from USGS Gale DEM",
+            opacity: 0.78,
+            visible: false,
+            spatialReference: marsSpatialReference
+          });
+          map.add(slopeLayer, 2);
+          slopeToggle.disabled = false;
+          slopeToggle.textContent = "Show slope";
+          slopeToggle.setAttribute("aria-pressed", "false");
+          slopeState.textContent = "Ready";
+          slopeDataStatus.classList.add("ready");
+          slopeDataStatus.textContent = `Slope overlay ready · ${metadata.width} × ${metadata.height} cells · ${metadata.analysisGridMeters} m grid.`;
+        } catch (error) {
+          // This is the expected state until the user runs process_slope.bat.
+          slopeToggle.disabled = true;
+          slopeToggle.textContent = "Generate slope data first";
+          slopeState.textContent = "Not built";
+          slopeDataStatus.textContent = "Slope overlay not generated yet. Download the USGS DEM and run process_slope.bat; see README.md.";
+          console.info("Slope overlay not loaded:", error.message);
+        }
+      }
+      initializeSlopeLayer();
+
+      slopeToggle.addEventListener("click", function () {
+        if (!slopeLayer) return;
+        slopeLayer.visible = !slopeLayer.visible;
+        const isVisible = slopeLayer.visible;
+        slopeToggle.textContent = isVisible ? "Hide slope" : "Show slope";
+        slopeToggle.setAttribute("aria-pressed", String(isVisible));
+        slopeState.textContent = isVisible ? "On" : "Off";
+        slopeState.style.color = isVisible ? "#8bc7a2" : "";
+        slopeOpacity.disabled = !isVisible;
+      });
+
+      slopeOpacity.addEventListener("input", function () {
+        if (!slopeLayer) return;
+        const opacity = Number(slopeOpacity.value);
+        slopeLayer.opacity = opacity / 100;
+        slopeOpacityValue.textContent = opacity + "%";
+      });
+
+      view.when(function () {
+        document.getElementById("loading").classList.add("hidden");
+        view.goTo({ center: landingPoint, zoom: 8 }, { animate: false });
+      }).catch(function (error) {
+        document.getElementById("loading").textContent =
+          "The map could not load. Check your internet connection and try opening this page again.";
+        console.error("Map initialization error:", error);
+      });
+
+      document.getElementById("resetView").addEventListener("click", function () {
+        view.goTo({ center: landingPoint, zoom: 8 });
+      });
+
+      const terrainToggle = document.getElementById("toggleTerrain");
+      const terrainState = document.getElementById("terrainState");
+      const terrainOpacity = document.getElementById("terrainOpacity");
+      const terrainOpacityValue = document.getElementById("terrainOpacityValue");
+
+      terrainToggle.addEventListener("click", function () {
+        terrainLayer.visible = !terrainLayer.visible;
+        const isVisible = terrainLayer.visible;
+        terrainToggle.textContent = isVisible ? "Hide terrain" : "Show terrain";
+        terrainToggle.setAttribute("aria-pressed", String(isVisible));
+        terrainState.textContent = isVisible ? "On" : "Off";
+        terrainState.style.color = isVisible ? "#8bc7a2" : "";
+        terrainOpacity.disabled = !isVisible;
+      });
+
+      terrainOpacity.addEventListener("input", function () {
+        const opacity = Number(terrainOpacity.value);
+        terrainLayer.opacity = opacity / 100;
+        terrainOpacityValue.textContent = opacity + "%";
+      });
+
+      document.getElementById("copyCoords").addEventListener("click", async function () {
+        const text = "137.4019, -4.5965";
+        const button = this;
+        try {
+          await navigator.clipboard.writeText(text);
+          button.textContent = "Copied!";
+          setTimeout(() => { button.textContent = "Copy coordinates"; }, 1400);
+        } catch (error) {
+          button.textContent = text;
+          console.warn("Clipboard access was unavailable:", error);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
