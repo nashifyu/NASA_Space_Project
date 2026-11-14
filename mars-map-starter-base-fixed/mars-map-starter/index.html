@@ -544,6 +544,31 @@
       });
 
       const referenceLayer = new GraphicsLayer({ title: "Paper reference point" });
+      
+      const locations = [
+  {
+    id: "base",
+    name: "Astronaut Base",
+    latitude: -4.5965,
+    longitude: 137.4019,
+    type: "base"
+  },
+  {
+    id: "darwin",
+    name: "Darwin Outcrop",
+    latitude: -4.60657,
+    longitude: 137.42631,
+    type: "poi"
+  },
+  {
+    id: "kimberley",
+    name: "The Kimberley",
+    latitude: -4.63678,
+    longitude: 137.40194,
+    type: "destination"
+  }
+];
+      
       const map = new Map({
         basemap: null,
         layers: [imagery, terrainLayer, referenceLayer]
