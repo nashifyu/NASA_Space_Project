@@ -7,7 +7,7 @@ This is a small, single-page web app that opens an overhead Mars basemap and cen
 
 ## Run it
 
-1. Download and unzip the project.
+1. Download and unzip the project named mars-map-starter
 2. Open a terminal in the `mars-map-starter` folder.
 3. Start a local web server:
 
