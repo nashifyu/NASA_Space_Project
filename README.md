@@ -1,5 +1,10 @@
 # Mount Sharp Explorer — starter map
 
+**AIs used for development and data/task selection: ChatGPT (GPT6-Luna, Claude Haikyu 5.5)**
+- We primarily used AI assistance to build the application from the ground up and get a dummy version of our tool to run through html, so that we could add more tailored functionality to it. We also used AI for learning about specific parameters that would be useful for our use case, for example, finding out that radiation would be a useful metric to factor into our danger-aware path=planning algorithm.
+  
+
+
 This is a small, single-page web app that opens an overhead Mars basemap and centers the view on the MSL landing-ellipse reference point cited in Calef et al. (2015):
 
 - Longitude: `137.4019° E`
